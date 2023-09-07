@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unity.WebRTC.Samples", "Unity.WebRTC.Samples.csproj", "{a0d7b9e2-71b5-5fee-96c6-78cde1b50407}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PimDeWitte.UnityMainThreadDispatcher", "PimDeWitte.UnityMainThreadDispatcher.csproj", "{840642f0-4452-e92a-d88e-57af4b8f27f0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{e215cebe-27e5-a325-3627-ee675b50a510}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{e2f663fa-cc1e-2b64-48a1-d9441ddf03f0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{a0d7b9e2-71b5-5fee-96c6-78cde1b50407}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{a0d7b9e2-71b5-5fee-96c6-78cde1b50407}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{840642f0-4452-e92a-d88e-57af4b8f27f0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{840642f0-4452-e92a-d88e-57af4b8f27f0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{e215cebe-27e5-a325-3627-ee675b50a510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{e215cebe-27e5-a325-3627-ee675b50a510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{e2f663fa-cc1e-2b64-48a1-d9441ddf03f0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{e2f663fa-cc1e-2b64-48a1-d9441ddf03f0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
