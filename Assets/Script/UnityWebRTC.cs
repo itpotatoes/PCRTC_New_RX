@@ -171,18 +171,6 @@ private MemoryStream ms = new MemoryStream();
     private int reCount = 0;
     private int Count = 0;
     
-    public byte[] DecompressData(byte[] compressedData)
-    {
-        using (MemoryStream input = new MemoryStream(compressedData))
-        using (MemoryStream output = new MemoryStream())
-        {
-            using (GZipStream gzip = new GZipStream(input, CompressionMode.Decompress))
-            {
-                gzip.CopyTo(output);
-            }
-            return output.ToArray();
-        }
-    }
     
     public byte[] DecompressData2(byte[] compressedData)
     {
@@ -219,140 +207,55 @@ private MemoryStream ms = new MemoryStream();
     }
 
     
-private async void ReceiveChunk(byte[] chunkData)
-{
-    
-    if (!fpsStopwatch.IsRunning)
+    private async void ReceiveChunk(byte[] chunkData)
     {
-        fpsStopwatch.Start();
-    }
-    
-    
-    
-    int numVertices = 92160;
-    if (chunkData.Length == 4 && BitConverter.ToInt32(chunkData, 0) == 0)
-    {
-        
-        
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-        
-        
-        //byte[] receivedData = receivedData2.ToArray();
-                
-        byte[] decompressedData = receivedData2.ToArray();
-        byte[]  receivedData = DecompressData2(decompressedData);
-        
-        
-        if (receivedData.Length < ((3 * sizeof(float) + 4)) + sizeof(long) + sizeof(int))
-    {
-        reCount++;
-        Debug.LogError($"Received data length {receivedData.Length} is not enough for expected data.");
-        return;
-    }
-    
-
-        try
+        // 특별한 종료 신호가 오면 데이터 처리를 시작
+        if (chunkData.Length == 4 && BitConverter.ToInt32(chunkData, 0) == 0)
         {
-
-            Vector3[] vertices = new Vector3[numVertices];
-            Color32[] colors = new Color32[numVertices];
-
-            int endOfData = receivedData.Length - sizeof(long);
-
-            // Extract UNIX timestamp
-            long unixTimestamp = BitConverter.ToInt64(receivedData, endOfData);
-            endOfData -= sizeof(long);
-
-            // Extract zeroIndicesCount
-            int zeroIndicesCount = BitConverter.ToInt32(receivedData, endOfData);
-            endOfData -= sizeof(int);
-            int currentIndex = endOfData - (zeroIndicesCount * sizeof(int));
-
-            // Extract zeroIndices
-            HashSet<int> receivedZeroIndices = new HashSet<int>();
-            for (int i = 0; i < zeroIndicesCount; i++)
+            try
             {
-                int zeroIndex = BitConverter.ToInt32(receivedData, currentIndex);
-                receivedZeroIndices.Add(zeroIndex);
-                currentIndex += sizeof(int);
-            }
+                byte[] receivedData = receivedData2.ToArray();
+                
 
-            // Reset the index to process vertex and color data
-            currentIndex = 0;
+                Vector3[] vertices = new Vector3[92160];
+                Color32[] colors = new Color32[92160];
 
-            for (int i = 0; i < numVertices; i++)
-            {
-                if (receivedZeroIndices.Contains(i))
+                for (int i = 0; i < 92160; i++)
                 {
-                    vertices[i] = new Vector3(0, 0, 0);
-                    colors[i] = new Color32(0, 0, 0, 255);
-                }
-                else
-                {
-                    float x = BitConverter.ToSingle(receivedData, currentIndex);
-                    currentIndex += sizeof(float);
-                    float y = BitConverter.ToSingle(receivedData, currentIndex);
-                    currentIndex += sizeof(float);
-                    float z = BitConverter.ToSingle(receivedData, currentIndex);
-                    currentIndex += sizeof(float);
-
-                    byte r = receivedData[currentIndex++];
-                    byte g = receivedData[currentIndex++];
-                    byte b = receivedData[currentIndex++];
-                    byte a = receivedData[currentIndex++];
+                    int offset = i * (sizeof(float) * 3 + sizeof(byte) * 4);
+                    float x = BitConverter.ToSingle(receivedData, offset);
+                    float y = BitConverter.ToSingle(receivedData, offset + sizeof(float));
+                    float z = BitConverter.ToSingle(receivedData, offset + 2 * sizeof(float));
+                
+                    byte r = receivedData[offset + 3 * sizeof(float)];
+                    byte g = receivedData[offset + 3 * sizeof(float) + 1];
+                    byte b = receivedData[offset + 3 * sizeof(float) + 2];
+                    byte a = receivedData[offset + 3 * sizeof(float) + 3];
 
                     vertices[i] = new Vector3(x, y, z);
                     colors[i] = new Color32(r, g, b, a);
                 }
+
+                mesh.vertices = vertices;
+                mesh.colors32 = colors;
+                mesh.RecalculateBounds();
+
+                // 데이터 처리 완료 후 receivedData2 초기화
+                receivedData2.Clear();
             }
-            
-    
-            DateTime sentTime = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).UtcDateTime;
-            TimeSpan delay = DateTime.UtcNow - sentTime;
-        
-            string path = "DelayLog_256KBLZ4.txt";  // Update this path to your actual file path.
-            string delayText = $"{DateTime.UtcNow.AddHours(9)} Delay: {delay.TotalMilliseconds} ms";
-            using (StreamWriter sw = new StreamWriter(path, append: true))
+            catch(Exception e)
             {
-                await sw.WriteLineAsync(delayText);
+                Debug.LogError("An error occurred while processing the received data: " + e.ToString());
+                receivedData2.Clear();  // 에러 발생 시 데이터 초기화
             }
-
-            
-            
-            // Set mesh info and log
-            mesh.vertices = vertices;
-            mesh.colors32 = colors;
-            mesh.RecalculateBounds();
-            frameCount++;
-
-            // FPS 계산
-            if (fpsStopwatch.ElapsedMilliseconds >= 1000) // 1초마다 FPS 계산
-            {
-                float fps = frameCount / (fpsStopwatch.ElapsedMilliseconds / 1000.0f);
-                Debug.LogError($"Current FPS: {fps}");
-
-                frameCount = 0;
-                fpsStopwatch.Reset();
-                fpsStopwatch.Start();
-            }
-            
-            Debug.Log($"{receivedData2.Count} 데이터 수신함");
-
-            receivedData2.Clear();
         }
-        catch (Exception e)
+        else
         {
-            reCount++;
-            Debug.LogError("잘못된 메시지 형식으로 수신된 데이터입니다. 예외 발생: " + e.ToString());
-            receivedData2.Clear();
+            // 특별한 종료 신호가 아니면 데이터를 계속 모음
+            receivedData2.AddRange(chunkData);
         }
     }
-    else
-    {
-        receivedData2.AddRange(chunkData);
-    }
-}
+
 
 private int frameCount = 0;
 private Stopwatch fpsStopwatch = new Stopwatch();
